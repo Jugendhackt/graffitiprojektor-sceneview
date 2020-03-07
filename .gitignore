@@ -11,3 +11,10 @@ local.properties
 #
 # # OS configurations.
 .DS_Store
+
+#VS Code
+.project
+.settings/
+
+# Andy
+*.sfb

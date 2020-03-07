@@ -31,6 +31,7 @@ import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
 
@@ -43,6 +44,7 @@ public class HelloSceneformActivity extends AppCompatActivity {
 
   private ArFragment arFragment;
   private ModelRenderable andyRenderable;
+  private ViewRenderable viewRenderable;
 
   @Override
   @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
@@ -72,6 +74,20 @@ public class HelloSceneformActivity extends AppCompatActivity {
               toast.show();
               return null;
             });
+    
+
+    ViewRenderable.builder()
+    .setView(this, R.layout.test_view)
+    .build()
+    .thenAccept(renderable -> testViewRenderable = renderable);
+    .exceptionally(
+        throwable -> {
+          Toast toast =
+              Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
+          toast.setGravity(Gravity.CENTER, 0, 0);
+          toast.show();
+          return null;
+        });
 
     arFragment.setOnTapArPlaneListener(
         (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
