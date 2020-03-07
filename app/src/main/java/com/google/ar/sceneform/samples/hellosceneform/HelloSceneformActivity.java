@@ -77,13 +77,13 @@ public class HelloSceneformActivity extends AppCompatActivity {
     
 
     ViewRenderable.builder()
-    .setView(this, R.layout.test_view)
+    .setView(this, R.layout.text_view)
     .build()
-    .thenAccept(renderable -> testViewRenderable = renderable);
+    .thenAccept(renderable -> viewRenderable = renderable)
     .exceptionally(
         throwable -> {
           Toast toast =
-              Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
+              Toast.makeText(this, "Unable to load view renderable", Toast.LENGTH_LONG);
           toast.setGravity(Gravity.CENTER, 0, 0);
           toast.show();
           return null;
@@ -91,7 +91,7 @@ public class HelloSceneformActivity extends AppCompatActivity {
 
     arFragment.setOnTapArPlaneListener(
         (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
-          if (andyRenderable == null) {
+          if (viewRenderable == null) {
             return;
           }
 
@@ -103,7 +103,7 @@ public class HelloSceneformActivity extends AppCompatActivity {
           // Create the transformable andy and add it to the anchor.
           TransformableNode andy = new TransformableNode(arFragment.getTransformationSystem());
           andy.setParent(anchorNode);
-          andy.setRenderable(andyRenderable);
+          andy.setRenderable(viewRenderable);
           andy.select();
         });
   }
