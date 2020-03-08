@@ -15,25 +15,36 @@
  */
 package com.google.ar.sceneform.samples.hellosceneform;
 
+import java.net.URL;
+import java.io.InputStream;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
+import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
+import com.google.ar.core.Pose;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
+import com.google.ar.sceneform.math.Vector3;
 
 /**
  * This is an example activity that uses the Sceneform UX package to make common AR tasks easier.
@@ -43,7 +54,6 @@ public class HelloSceneformActivity extends AppCompatActivity {
   private static final double MIN_OPENGL_VERSION = 3.0;
 
   private ArFragment arFragment;
-  private ModelRenderable andyRenderable;
   private ViewRenderable viewRenderable;
 
   @Override
@@ -59,25 +69,17 @@ public class HelloSceneformActivity extends AppCompatActivity {
 
     setContentView(R.layout.activity_ux);
     arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
-
+    
+    LayoutInflater li = LayoutInflater.from(this);
+    ImageView iv = (ImageView)li.inflate(R.layout.text_view, null);
+    //setContentView(R.layout.text_view);
+    //ImageView iv = (ImageView)findViewById(R.id.imageView);
+    //new DownloadImageTask(iv).execute("http://localhost:9030/text?message=cool");
+    
     // When you build a Renderable, Sceneform loads its resources in the background while returning
     // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
-    ModelRenderable.builder()
-        .setSource(this, R.raw.andy)
-        .build()
-        .thenAccept(renderable -> andyRenderable = renderable)
-        .exceptionally(
-            throwable -> {
-              Toast toast =
-                  Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
-              toast.setGravity(Gravity.CENTER, 0, 0);
-              toast.show();
-              return null;
-            });
-    
-
     ViewRenderable.builder()
-    .setView(this, R.layout.text_view)
+    .setView(this, iv)
     .build()
     .thenAccept(renderable -> viewRenderable = renderable)
     .exceptionally(
@@ -94,17 +96,23 @@ public class HelloSceneformActivity extends AppCompatActivity {
           if (viewRenderable == null) {
             return;
           }
+          viewRenderable.setShadowCaster(false);
 
           // Create the Anchor.
-          Anchor anchor = hitResult.createAnchor();
+          float[] pos = {0,-1,0};
+          float[] rot = {-0.707f,0,0,0.707f};
+          Pose pose_pos = Pose.makeTranslation(pos);
+          Pose pose_rot = Pose.makeRotation(rot);
+          Pose pose = hitResult.getHitPose().compose(pose_rot).compose(pose_pos);
+          Anchor anchor = hitResult.getTrackable().createAnchor(pose);
           AnchorNode anchorNode = new AnchorNode(anchor);
           anchorNode.setParent(arFragment.getArSceneView().getScene());
 
           // Create the transformable andy and add it to the anchor.
-          TransformableNode andy = new TransformableNode(arFragment.getTransformationSystem());
-          andy.setParent(anchorNode);
-          andy.setRenderable(viewRenderable);
-          andy.select();
+          TransformableNode transformableNode = new TransformableNode(arFragment.getTransformationSystem());
+          transformableNode.setParent(anchorNode);
+          transformableNode.setRenderable(viewRenderable);
+          transformableNode.select();
         });
   }
 
@@ -135,5 +143,30 @@ public class HelloSceneformActivity extends AppCompatActivity {
       return false;
     }
     return true;
+  }
+
+  private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
+    ImageView bmImage;
+
+    public DownloadImageTask(ImageView bmImage) {
+        this.bmImage = bmImage;
+    }
+
+    protected Bitmap doInBackground(String... urls) {
+        String urldisplay = urls[0];
+        Bitmap mIcon11 = null;
+        try {
+            InputStream in = new java.net.URL(urldisplay).openStream();
+            mIcon11 = BitmapFactory.decodeStream(in);
+        } catch (Exception e) {
+            Log.e("Error", e.getMessage());
+            e.printStackTrace();
+        }
+        return mIcon11;
+    }
+
+    protected void onPostExecute(Bitmap result) {
+        bmImage.setImageBitmap(result);
+    }
   }
 }
